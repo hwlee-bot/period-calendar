@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>생리 달력</title>
+<style>
+  :root{
+    --pink:#e88fa3; --pink-soft:#fbe6ec; --pink-line:#f3c3d0;
+    --purple:#a78bd6; --purple-soft:#f0e9fb;
+    --ink:#3a3540; --sub:#8b8494; --card:#ffffff; --bg:#fdf6f8;
+    --line:#f0e4e8;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:var(--ink);}
+  #gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+  .gatecard{background:var(--card);border-radius:22px;padding:38px 30px;max-width:380px;width:100%;text-align:center;
+    box-shadow:0 8px 30px rgba(232,143,163,.18);}
+  .lock{font-size:34px;}
+  .gatecard h2{font-size:21px;font-weight:800;margin:10px 0 0;}
+  .gatecard p{font-size:14px;color:var(--sub);margin-top:8px;line-height:1.5;}
+  .pin{margin-top:18px;width:100%;padding:14px;border-radius:12px;border:1.5px solid var(--pink-line);
+    font-size:20px;text-align:center;letter-spacing:4px;outline:none;}
+  .pin:focus{border-color:var(--pink);}
+  .gbtn{margin-top:14px;width:100%;padding:13px;border:none;border-radius:12px;background:var(--pink);
+    color:#fff;font-size:15.5px;font-weight:700;cursor:pointer;}
+  .err{color:#d1495b;font-size:13px;margin-top:10px;min-height:16px;}
+
+  #app{display:none;}
+  .wrap{max-width:440px;margin:0 auto;padding:22px 16px 60px;}
+  .brand{font-size:11.5px;letter-spacing:.06em;color:var(--sub);text-align:center;}
+  h1{font-size:22px;font-weight:800;text-align:center;margin:6px 0 20px;}
+
+  .card{background:var(--card);border-radius:18px;padding:18px;margin-bottom:16px;box-shadow:0 4px 18px rgba(160,120,140,.08);}
+
+  .calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .calhead button{border:none;background:var(--pink-soft);color:var(--pink);width:32px;height:32px;border-radius:10px;font-size:16px;font-weight:800;cursor:pointer;}
+  .calhead .ym{font-size:16px;font-weight:800;}
+  .grid7{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;}
+  .dow{font-size:11px;color:var(--sub);font-weight:700;padding-bottom:4px;}
+  .day{position:relative;aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+    font-size:13px;border-radius:10px;color:var(--ink);}
+  .day.other{color:#d8d2d8;}
+  .day.today{outline:2px solid var(--ink);outline-offset:-2px;font-weight:800;}
+  .day.period{background:var(--pink);color:#fff;font-weight:700;}
+  .day.predicted{background:var(--pink-soft);border:1.5px dashed var(--pink);color:var(--pink);font-weight:700;}
+  .day.fertile{background:var(--purple-soft);color:var(--purple);font-weight:700;}
+  .day.ovul::after{content:"";position:absolute;bottom:3px;width:5px;height:5px;border-radius:50%;background:var(--purple);}
+
+  .legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;font-size:11.5px;color:var(--sub);}
+  .legend span{display:inline-flex;align-items:center;gap:5px;}
+  .dot{width:10px;height:10px;border-radius:3px;display:inline-block;}
+
+  .statgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .stat{background:var(--pink-soft);border-radius:14px;padding:12px;text-align:center;}
+  .stat .v{font-size:19px;font-weight:800;color:var(--pink);}
+  .stat .l{font-size:11.5px;color:var(--sub);margin-top:2px;}
+  .predictbox{background:var(--purple-soft);border-radius:14px;padding:14px;margin-top:10px;font-size:13.5px;line-height:1.7;}
+  .predictbox b{color:var(--purple);}
+  .accuracy{font-size:11px;color:var(--sub);margin-top:8px;text-align:right;}
+
+  .cta{display:flex;gap:8px;margin-top:4px;}
+  .cta a{flex:1;text-align:center;padding:13px;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;}
+  .cta .start{background:var(--pink);color:#fff;}
+  .cta .end{background:var(--pink-soft);color:var(--pink);border:1.5px solid var(--pink-line);}
+  .ctahint{font-size:11.5px;color:var(--sub);margin-top:8px;line-height:1.5;text-align:center;}
+
+  .rec{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
+  .rec:last-child{border-bottom:none;}
+  .rec .rd{font-weight:700;}
+  .rec .rm{color:var(--sub);font-size:12px;margin-top:2px;max-width:220px;}
+  .rec .rn{color:var(--sub);font-size:12.5px;white-space:nowrap;}
+
+  .foot{text-align:center;font-size:11px;color:#c9bec5;margin-top:18px;line-height:1.6;}
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="gatecard">
+    <div class="lock">🔒</div>
+    <h2>여왕님의 생리 달력</h2>
+    <p>비밀번호를 입력하세요.</p>
+    <input class="pin" id="pin" type="password" inputmode="numeric" maxlength="12" placeholder="••••••" autocomplete="off">
+    <button class="gbtn" id="go">열기</button>
+    <div class="err" id="err"></div>
+  </div>
+</div>
+
+<div id="app"><div class="wrap">
+  <div class="brand">Private · 여왕님 전용</div>
+  <h1>🌸 생리 달력</h1>
+
+  <div class="card">
+    <div class="calhead">
+      <button id="prevM">‹</button>
+      <div class="ym" id="ymLabel"></div>
+      <button id="nextM">›</button>
+    </div>
+    <div class="grid7" id="dow"></div>
+    <div class="grid7" id="cal"></div>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--pink)"></i>생리기간</span>
+      <span><i class="dot" style="background:var(--pink-soft);border:1.5px dashed var(--pink)"></i>예상 생리</span>
+      <span><i class="dot" style="background:var(--purple-soft)"></i>가임기</span>
+      <span><i class="dot" style="background:var(--purple)"></i>배란 추정일</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="statgrid">
+      <div class="stat"><div class="v" id="stAvgCycle">-</div><div class="l">평균 주기</div></div>
+      <div class="stat"><div class="v" id="stAvgPeriod">-</div><div class="l">평균 생리기간</div></div>
+    </div>
+    <div class="predictbox" id="predictBox"></div>
+    <div class="accuracy" id="accuracyNote"></div>
+  </div>
+
+  <div class="card">
+    <div class="cta">
+      <a class="start" id="btnStart" target="_blank" rel="noopener">🩸 생리 시작 기록</a>
+      <a class="end" id="btnEnd" target="_blank" rel="noopener">✔️ 생리 종료 기록</a>
+    </div>
+    <div class="ctahint">버튼을 누르면 텔레그램에 메시지가 미리 채워집니다. 날짜를 확인하고 전송 버튼만 눌러주시면 집사가 바로 기록합니다.</div>
+  </div>
+
+  <div class="card">
+    <div style="font-weight:800;font-size:14.5px;margin-bottom:6px;">최근 기록</div>
+    <div id="recList"></div>
+  </div>
+
+  <div class="foot">🔒 비공개 페이지 · 집사가 준비했습니다</div>
+</div></div>
+
+<script>
+const HASH="5db5c78f574aa1707443290a3f16890a0111799eaa40460a33340e135eea3fd2";
+const SALT="-period-jipsa";
+const BOT_USERNAME="hyejin_hyunwoo_jipsa_bot";
+
+// ── 정본 데이터 (집사가 텔레그램 대화로 갱신 시 이 배열도 함께 갱신됩니다) ──
+const RECORDS=[
+  {"start":"2026-04-20","end":"2026-04-27","memo":""},
+  {"start":"2026-05-19","end":"2026-05-25","memo":""},
+  {"start":"2026-06-15","end":"2026-06-20","memo":""},
+  {"start":"2026-07-12","end":"2026-07-19","memo":""}
+];
+
+async function sha(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));
+  return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');}
+const gate=document.getElementById("gate"), app=document.getElementById("app");
+function unlock(){ gate.style.display="none"; app.style.display="block"; init(); }
+async function tryPin(){
+  const v=document.getElementById("pin").value.trim();
+  const h=await sha(v+SALT);
+  if(h===HASH){ try{sessionStorage.setItem("period_ok","1");}catch(e){} unlock(); }
+  else { document.getElementById("err").textContent="비밀번호가 맞지 않습니다."; }
+}
+document.getElementById("go").addEventListener("click",tryPin);
+document.getElementById("pin").addEventListener("keydown",e=>{ if(e.key==="Enter") tryPin(); });
+try{ if(sessionStorage.getItem("period_ok")==="1") unlock(); }catch(e){}
+
+// ── 날짜 유틸 ──
+function parseD(s){ const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d); }
+function fmtD(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function addDays(d,n){ const r=new Date(d); r.setDate(r.getDate()+n); return r; }
+function dayDiff(a,b){ return Math.round((b-a)/86400000); }
+function sameDay(a,b){ return fmtD(a)===fmtD(b); }
+
+// ── 통계·예측 계산 ──
+function computeStats(records){
+  const sorted=[...records].sort((a,b)=>parseD(a.start)-parseD(b.start));
+  const cycles=[];
+  for(let i=1;i<sorted.length;i++){ cycles.push(dayDiff(parseD(sorted[i-1].start),parseD(sorted[i].start))); }
+  const periods=sorted.filter(r=>r.end).map(r=>dayDiff(parseD(r.start),parseD(r.end))+1);
+  const avg=arr=>arr.length? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length) : null;
+  const avgCycle=avg(cycles), avgPeriod=avg(periods);
+  const minCycle=cycles.length? Math.min(...cycles):null, maxCycle=cycles.length? Math.max(...cycles):null;
+  const last=sorted[sorted.length-1];
+  let nextStart=null, ovulation=null, fertileStart=null, fertileEnd=null;
+  if(last && avgCycle){
+    nextStart=addDays(parseD(last.start), avgCycle);
+    ovulation=addDays(nextStart,-14);
+    fertileStart=addDays(ovulation,-5);
+    fertileEnd=addDays(ovulation,1);
+  }
+  return {sorted,avgCycle,avgPeriod,minCycle,maxCycle,nextStart,ovulation,fertileStart,fertileEnd};
+}
+
+let STATE={};
+function init(){
+  STATE=computeStats(RECORDS);
+  const today=new Date();
+  renderStats();
+  renderRecords();
+  renderCTA(today);
+  let view={y:today.getFullYear(),m:today.getMonth()};
+  renderCalendar(view.y,view.m);
+  document.getElementById("prevM").onclick=()=>{ view.m--; if(view.m<0){view.m=11;view.y--;} renderCalendar(view.y,view.m); };
+  document.getElementById("nextM").onclick=()=>{ view.m++; if(view.m>11){view.m=0;view.y++;} renderCalendar(view.y,view.m); };
+}
+
+function renderStats(){
+  document.getElementById("stAvgCycle").textContent = STATE.avgCycle? STATE.avgCycle+"일" : "-";
+  document.getElementById("stAvgPeriod").textContent = STATE.avgPeriod? STATE.avgPeriod+"일" : "-";
+  const box=document.getElementById("predictBox");
+  if(STATE.nextStart){
+    box.innerHTML =
+      `다음 생리 예상일 · <b>${fmtD(STATE.nextStart)}</b><br>`+
+      `배란 추정일 · <b>${fmtD(STATE.ovulation)}</b><br>`+
+      `가임기 · <b>${fmtD(STATE.fertileStart)} ~ ${fmtD(STATE.fertileEnd)}</b>`;
+  } else {
+    box.innerHTML = "기록이 2회 이상 쌓이면 예측이 표시됩니다.";
+  }
+  const acc=document.getElementById("accuracyNote");
+  const n=STATE.sorted ? STATE.sorted.length : 0;
+  if(STATE.minCycle!=null && STATE.minCycle!==STATE.maxCycle){
+    acc.textContent = `정확도: 추정 (최근 ${n}회 기준, 주기 ${STATE.minCycle}~${STATE.maxCycle}일 편차 있음)`;
+  } else if(n>0){
+    acc.textContent = `정확도: 추정 (최근 ${n}회 기준)`;
+  } else {
+    acc.textContent = "";
+  }
+}
+
+function renderRecords(){
+  const list=document.getElementById("recList");
+  const sorted=[...STATE.sorted].reverse();
+  list.innerHTML = sorted.map(r=>{
+    const s=parseD(r.start);
+    const len = r.end ? (dayDiff(s,parseD(r.end))+1)+"일" : "진행중";
+    const range = r.end ? `${r.start.slice(5)} ~ ${r.end.slice(5)}` : `${r.start.slice(5)} ~`;
+    return `<div class="rec"><div><div class="rd">${range}</div>${r.memo?`<div class="rm">${r.memo}</div>`:""}</div><div class="rn">${len}</div></div>`;
+  }).join("") || `<div style="color:var(--sub);font-size:13px;">아직 기록이 없습니다.</div>`;
+}
+
+function renderCTA(today){
+  const d=fmtD(today);
+  const startMsg=encodeURIComponent(`생리 시작 ${d}`);
+  const endMsg=encodeURIComponent(`생리 종료 ${d}`);
+  document.getElementById("btnStart").href = `https://t.me/${BOT_USERNAME}?text=${startMsg}`;
+  document.getElementById("btnEnd").href = `https://t.me/${BOT_USERNAME}?text=${endMsg}`;
+}
+
+function renderCalendar(y,m){
+  document.getElementById("ymLabel").textContent = `${y}년 ${m+1}월`;
+  const dow=document.getElementById("dow");
+  dow.innerHTML = ["일","월","화","수","목","금","토"].map(d=>`<div class="dow">${d}</div>`).join("");
+
+  const first=new Date(y,m,1);
+  const startOffset=first.getDay();
+  const daysInMonth=new Date(y,m+1,0).getDate();
+  const daysInPrev=new Date(y,m,0).getDate();
+  const today=new Date();
+
+  const cells=[];
+  for(let i=startOffset-1;i>=0;i--) cells.push({d:daysInPrev-i, other:true, date:new Date(y,m-1,daysInPrev-i)});
+  for(let d=1;d<=daysInMonth;d++) cells.push({d, other:false, date:new Date(y,m,d)});
+  while(cells.length%7!==0) { const n=cells.length - (startOffset+daysInMonth); cells.push({d:n+1, other:true, date:new Date(y,m+1,n+1)}); }
+
+  const cal=document.getElementById("cal");
+  cal.innerHTML = cells.map(c=>{
+    let cls="day"+(c.other?" other":"");
+    if(sameDay(c.date,today)) cls+=" today";
+    const inPeriod = STATE.sorted.some(r=> r.end ? (c.date>=parseD(r.start)&&c.date<=parseD(r.end)) : sameDay(c.date,parseD(r.start)));
+    const inPredicted = STATE.nextStart && STATE.avgPeriod && c.date>=STATE.nextStart && c.date<=addDays(STATE.nextStart,STATE.avgPeriod-1);
+    const inFertile = STATE.fertileStart && c.date>=STATE.fertileStart && c.date<=STATE.fertileEnd;
+    const isOvul = STATE.ovulation && sameDay(c.date,STATE.ovulation);
+    if(inPeriod) cls+=" period";
+    else if(inPredicted) cls+=" predicted";
+    else if(inFertile) cls+=" fertile";
+    if(isOvul) cls+=" ovul";
+    return `<div class="${cls}">${c.d}</div>`;
+  }).join("");
+}
+</script>
+</body>
+</html>
